@@ -17,33 +17,35 @@ semaphore s[N];      // semaforo de cada filosofo
 
 void down(semaphore *mutex)
 {
+    mutex--;
 }
 
 void up(semaphore *mutex)
 {
+    mutex++;
 }
 
 /**
  * @brief Muda o estado do filósofo para pensando
  *
  */
-void think()
+void pensar(int i)
 {
     state[N] = PENSANDO;
-    printf("Filosofo está pensando.\n");
+    printf("Filosofo %d está pensando.\n", i);
 }
 
 /**
  * @brief Muda o estado do filósofo para comendo
  *
  */
-void eat()
+void comer(i)
 {
     state[N] = COMENDO;
-    printf("Filosofo está comendo.\n");
+    printf("Filosofo %d está comendo.\n",i);
 }
 
-void test(int i)
+void testar(int i)
 {
     if (state[i] == COM_FOME && state[ESQUERDA] != COMENDO && state[DIREITA] != COMENDO)
     {
@@ -57,11 +59,11 @@ void test(int i)
  *
  * @param i  O número do filósofo, de 0 a N–1
  */
-void take_forks(int i)
+void pegarGarfo(int i)
 {
     down(&mutex); // entra na regiao critica
     state[i] = COM_FOME;
-    test(i);     // tenta pegar os garfos
+    testar(i);   // tenta pegar os garfos
     up(&mutex);  // sai da regiao critica
     down(&s[i]); // bloqueia os garfos que não foram pegos
     printf(" O Filosofo %d pegou os garfos.\n", i);
@@ -72,33 +74,34 @@ void take_forks(int i)
  *
  * @param i O número do filósofo, de 0 a N–1
  */
-void put_forks(int i)
+void devolverGarfo(int i)
 {
     down(&mutex); // entra na regiao critica
     state[i] = PENSANDO;
-    test(ESQUERDA); // ve se o vizinho da esquerda pode comer agora
-    test(DIREITA);  // ve se o vizinho da direita pode comer agora
-    up(&mutex);     // sai da regiao critica
+    testar(ESQUERDA); // ve se o vizinho da esquerda pode comer agora
+    testar(DIREITA);  // ve se o vizinho da direita pode comer agora
+    up(&mutex);       // sai da regiao critica
     printf(" O Filosofo %d devolveu os garfos.\n", i);
 }
 
-void philosopher(int i)
+void filosofo(int i)
 {
-    while (cond)
-    {
-        think();       // filosofo esta pensando
-        take_forks(i); // pega dois garfos ou bloqueia
-        eat();         // comendo
-        put_forks(i);  // devolver os garfos a mesa
-    }
+    pensar(i);         // filosofo esta pensando
+    pegarGarfo(i);    // pega dois garfos ou bloqueia
+    comer(i);          // comendo
+    devolverGarfo(i); // devolver os garfos a mesa
+    // while (cond)
+    // {
+    // }
 }
 
 int main(int argc, char const *argv[])
 {
-    int i=0;
-    while (i < N)
+    int i = 1;
+    while (i <= N)
     {
-        philosopher(5);
+        filosofo(i);
+        i++;
     }
     return 0;
 }
