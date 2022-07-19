@@ -38,6 +38,7 @@ void up(semaphore *mutex)
 /**
  * @brief Muda o estado do filósofo para pensando
  *
+ * @param i índice do filósofo
  */
 void pensar(int i)
 {
@@ -48,6 +49,7 @@ void pensar(int i)
 /**
  * @brief Muda o estado do filósofo para comendo
  *
+ * @param i índice do filósofo
  */
 void comer(int i)
 {
