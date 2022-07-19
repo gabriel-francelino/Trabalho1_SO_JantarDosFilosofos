@@ -32,14 +32,14 @@ void up(semaphore *mutex)
 void pensar(int i)
 {
     state[N] = PENSANDO;
-    printf("Filosofo %d está pensando.\n", i);
+    printf("\nFilosofo %d está pensando.\n", i);
 }
 
 /**
  * @brief Muda o estado do filósofo para comendo
  *
  */
-void comer(i)
+void comer(int i)
 {
     state[N] = COMENDO;
     printf("Filosofo %d está comendo.\n",i);
