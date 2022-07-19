@@ -15,11 +15,21 @@ int state[N];        // estado do filósofo
 semaphore mutex = 1; // controla a regiao critica
 semaphore s[N];      // semaforo de cada filosofo
 
+/**
+ * @brief Libera a região crítica
+ * 
+ * @param mutex 
+ */
 void down(semaphore *mutex)
 {
     mutex--;
 }
 
+/**
+ * @brief Ocupa a região crítica
+ * 
+ * @param mutex 
+ */
 void up(semaphore *mutex)
 {
     mutex++;
@@ -45,6 +55,11 @@ void comer(int i)
     printf("Filosofo %d está comendo.\n",i);
 }
 
+/**
+ * @brief Testa se os filósofos vizinhos estão comendo.
+ * 
+ * @param i índice do filósofo
+ */
 void testar(int i)
 {
     if (state[i] == COM_FOME && state[ESQUERDA] != COMENDO && state[DIREITA] != COMENDO)
@@ -84,15 +99,17 @@ void devolverGarfo(int i)
     printf(" O Filosofo %d devolveu os garfos.\n", i);
 }
 
+/**
+ * @brief Realização das ações do filósofo no jantar
+ * 
+ * @param i índice do filósofo
+ */
 void filosofo(int i)
 {
     pensar(i);         // filosofo esta pensando
     pegarGarfo(i);    // pega dois garfos ou bloqueia
     comer(i);          // comendo
     devolverGarfo(i); // devolver os garfos a mesa
-    // while (cond)
-    // {
-    // }
 }
 
 int main(int argc, char const *argv[])
