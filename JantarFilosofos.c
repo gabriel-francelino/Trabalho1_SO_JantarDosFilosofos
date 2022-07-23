@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define N 5                      // numero de filosofos
 #define ESQUERDA (i + N - 1) % N // numero do vizinho a esquerda de i
@@ -7,30 +8,29 @@
 #define PENSANDO 0               // pensando
 #define COM_FOME 1               // tentando pegar garfos
 #define COMENDO 2                // comendo
-bool cond = true;                // condição
 
-typedef int semaphore;
+typedef int semaforo;
 
-int state[N];        // estado do filósofo
-semaphore mutex = 1; // controla a regiao critica
-semaphore s[N];      // semaforo de cada filosofo
+int state[N];       // estado do filósofo
+semaforo mutex = 1; // controla a regiao critica
+semaforo s[N];      // semaforo de cada filosofo
 
 /**
  * @brief Libera a região crítica
- * 
- * @param mutex 
+ *
+ * @param mutex
  */
-void down(semaphore *mutex)
+void down(semaforo *mutex)
 {
     mutex--;
 }
 
 /**
  * @brief Ocupa a região crítica
- * 
- * @param mutex 
+ *
+ * @param mutex
  */
-void up(semaphore *mutex)
+void up(semaforo *mutex)
 {
     mutex++;
 }
@@ -54,12 +54,12 @@ void pensar(int i)
 void comer(int i)
 {
     state[N] = COMENDO;
-    printf("Filosofo %d está comendo.\n",i);
+    printf("Filosofo %d está comendo.\n", i);
 }
 
 /**
  * @brief Testa se os filósofos vizinhos estão comendo.
- * 
+ *
  * @param i índice do filósofo
  */
 void testar(int i)
@@ -103,24 +103,28 @@ void devolverGarfo(int i)
 
 /**
  * @brief Realização das ações do filósofo no jantar
- * 
+ *
  * @param i índice do filósofo
  */
 void filosofo(int i)
 {
-    pensar(i);         // filosofo esta pensando
-    pegarGarfo(i);    // pega dois garfos ou bloqueia
-    comer(i);          // comendo
-    devolverGarfo(i); // devolver os garfos a mesa
+    while (true)
+    {
+        pensar(i);        // filosofo esta pensando
+        pegarGarfo(i);    // pega dois garfos ou bloqueia
+        comer(i);         // comendo
+        devolverGarfo(i); // devolver os garfos a mesa
+        if (i<5)
+        {
+            i++;
+        }else
+            exit(0);       
+    }
 }
 
 int main(int argc, char const *argv[])
 {
     int i = 1;
-    while (i <= N)
-    {
-        filosofo(i);
-        i++;
-    }
+    filosofo(i);
     return 0;
 }
