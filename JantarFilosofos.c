@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <windows.h>
 
 #define N 5                      // numero de filosofos
 #define ESQUERDA (i + N - 1) % N // numero do vizinho a esquerda de i
@@ -43,7 +44,8 @@ void up(semaforo *mutex)
 void pensar(int i)
 {
     state[N] = PENSANDO;
-    printf("\nFilosofo %d está pensando.\n", i);
+    printf("\nFilosofo %d esta pensando.\n", i);
+    Sleep(1000);
 }
 
 /**
@@ -54,7 +56,8 @@ void pensar(int i)
 void comer(int i)
 {
     state[N] = COMENDO;
-    printf("Filosofo %d está comendo.\n", i);
+    printf("Filosofo %d esta comendo.\n", i);
+    Sleep(2000);
 }
 
 /**
@@ -84,6 +87,7 @@ void pegarGarfo(int i)
     up(&mutex);  // sai da regiao critica
     down(&s[i]); // bloqueia os garfos que não foram pegos
     printf(" O Filosofo %d pegou os garfos.\n", i);
+    Sleep(1000);
 }
 
 /**
@@ -99,6 +103,7 @@ void devolverGarfo(int i)
     testar(DIREITA);  // ve se o vizinho da direita pode comer agora
     up(&mutex);       // sai da regiao critica
     printf(" O Filosofo %d devolveu os garfos.\n", i);
+    Sleep(1000);
 }
 
 /**
@@ -114,11 +119,11 @@ void filosofo(int i)
         pegarGarfo(i);    // pega dois garfos ou bloqueia
         comer(i);         // comendo
         devolverGarfo(i); // devolver os garfos a mesa
-        if (i<5)
+        if (i<N)
         {
             i++;
         }else
-            exit(0);       
+            i=1;  
     }
 }
 
