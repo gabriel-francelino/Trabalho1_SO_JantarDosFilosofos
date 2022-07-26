@@ -4,14 +4,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-//#include <Windows.h>
-
-// #ifdef _WIN32 || _WIN64
-//     #include <Windows.h>
-// #else
-//     #include <unistd.h>
-// #endif
-
 #define N 5                      // numero de filosofos
 #define ESQUERDA (i + N - 1) % N // numero do vizinho a esquerda de i
 #define DIREITA (i + 1) % N      // numero do vizinho a direita de i
@@ -26,48 +18,61 @@ semaforo mutex;      // controla a regiao critica
 semaforo s[N];       // semaforo de cada filosofo
 pthread_t jantar[N]; // Todos os filósofos
 
-/**
- * @brief Libera a região crítica
- *
- * @param mutex
- */
-void down(semaforo *mutex)
-{
-    mutex--;
-}
+void *filosofo(void *param);
+void pegarGarfo(int i);
+void devolverGarfo(int i);
+void testar(int i);
+void comer(int i);
+void pensar(int i);
 
 /**
- * @brief Ocupa a região crítica
- *
- * @param mutex
- */
-void up(semaforo *mutex)
-{
-    mutex++;
-}
-
-/**
- * @brief Muda o estado do filósofo para pensando
+ * @brief Realização das ações do filósofo no jantar
  *
  * @param i índice do filósofo
  */
-void pensar(int i)
+void *filosofo(void *vparam)
 {
-    state[N] = PENSANDO;
-    printf("\nFilosofo %d esta pensando.\n", i);
-    usleep(1000 * 1000);
+    int *i = (int *)(vparam); // Repassa o id do filósofo
+
+    while (true)
+    {
+        pensar(*(i));        // filosofo esta pensando
+        pegarGarfo(*(i));    // pega dois garfos ou bloqueia
+        comer(*(i));         // comendo
+        devolverGarfo(*(i)); // devolver os garfos a mesa
+    }
+
+    pthread_exit((void *)0); // Legado do retorno
 }
 
 /**
- * @brief Muda o estado do filósofo para comendo
+ * @brief Pega os dois garfos
  *
- * @param i índice do filósofo
+ * @param i  O número do filósofo, de 0 a N–1
  */
-void comer(int i)
+void pegarGarfo(int i)
 {
-    state[N] = COMENDO;
-    printf("Filosofo %d esta comendo.\n", i);
-    usleep(2000 * 1000);
+    pthread_mutex_lock(&(mutex)); // entra na regiao critica
+    printf(" O Filosofo %d pegou os garfos.\n", i);
+    state[i] = FAMINTO;
+    testar(i);                      // tenta pegar os garfos
+    pthread_mutex_unlock(&(mutex)); // Sai na região crítica
+    pthread_mutex_lock(&(s[i]));    // Bloqueia os hashis
+}
+
+/**
+ * @brief Devolve os dois garfos
+ *
+ * @param i O número do filósofo, de 0 a N–1
+ */
+void devolverGarfo(int i)
+{
+    pthread_mutex_lock(&(mutex)); // entra na regiao critica
+    printf(" O Filosofo %d devolveu os garfos.\n", i);
+    state[i] = PENSANDO;
+    testar(ESQUERDA);               // ve se o vizinho da esquerda pode comer agora
+    testar(DIREITA);                // ve se o vizinho da direita pode comer agora
+    pthread_mutex_unlock(&(mutex)); // Sai da regiсo crítica
 }
 
 /**
@@ -85,69 +90,33 @@ void testar(int i)
 }
 
 /**
- * @brief Pega os dois garfos
- *
- * @param i  O número do filósofo, de 0 a N–1
- */
-void pegarGarfo(int i)
-{
-    pthread_mutex_lock(&(mutex)); // entra na regiao critica
-    printf(" O Filosofo %d pegou os garfos.\n", i);
-    state[i] = FAMINTO;
-    testar(i);                      // tenta pegar os garfos
-    up(&mutex);                     // sai da regiao critica
-    pthread_mutex_unlock(&(mutex)); // Sai na região crítica
-    pthread_mutex_lock(&(s[i]));    // Bloqueia os hashis
-    usleep(1000 * 1000);
-}
-
-/**
- * @brief Devolve os dois garfos
- *
- * @param i O número do filósofo, de 0 a N–1
- */
-void devolverGarfo(int i)
-{
-    pthread_mutex_lock(&(mutex)); // entra na regiao critica
-    printf(" O Filosofo %d devolveu os garfos.\n", i);
-    state[i] = PENSANDO;
-    testar(ESQUERDA);               // ve se o vizinho da esquerda pode comer agora
-    testar(DIREITA);                // ve se o vizinho da direita pode comer agora
-    pthread_mutex_unlock(&(mutex)); // Sai da regiсo crítica
-    usleep(1000);
-}
-
-/**
- * @brief Realização das ações do filósofo no jantar
+ * @brief Muda o estado do filósofo para pensando
  *
  * @param i índice do filósofo
  */
-void *filosofo(void *vparam)
+void pensar(int i)
 {
-    int *i = (int *)(vparam); // Repassa o id do filósofo
+    int r = (rand() % 10 + 1);
+    state[N] = PENSANDO;
+    printf("\nFilosofo %d esta pensando por %d s.\n", i, r);
+    sleep(r);
+}
 
-    while (true)
-    {
-        pensar(*(i));        // filosofo esta pensando
-        pegarGarfo(*(i));    // pega dois garfos ou bloqueia
-        comer(*(i));         // comendo
-        devolverGarfo(*(i)); // devolver os garfos a mesa
-        // if (i < N)
-        // {
-        //     i++;
-        // }
-        // else
-        //     i = 1;
-    }
-
-    pthread_exit((void *)0); // Legado do retorno
+/**
+ * @brief Muda o estado do filósofo para comendo
+ *
+ * @param i índice do filósofo
+ */
+void comer(int i)
+{
+    int r = (rand() % 10 + 1);
+    state[N] = COMENDO;
+    printf("Filosofo %d esta comendo por %d s.\n", i, r);
+    sleep(r);
 }
 
 int main(int argc, char const *argv[])
 {
-    // int i = 1;
-    // filosofo(i);
-    // return 0;
     int cont;   // Contador auxiliar
     int status; // Criação da thread
 
@@ -178,5 +147,5 @@ int main(int argc, char const *argv[])
     }
     pthread_exit(NULL);
 
-    return EXIT_SUCCESS;    
+    return EXIT_SUCCESS;
 }
