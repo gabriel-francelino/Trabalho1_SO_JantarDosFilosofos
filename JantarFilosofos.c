@@ -13,11 +13,10 @@
 #define FAMINTO 1                // tentando pegar garfos
 #define COMENDO 2                // comendo
 
-int estado[N], int_rand, i;
+int estado[N], int_rand, i, cont=0;
 float float_rand;
 time_t inicio, fim;
 
-//int estado[N]; // estado do filósofo
 sem_t mutex;   // controla a regiao critica
 sem_t s[N];    // semaforo de cada filosofo
 
@@ -69,6 +68,9 @@ void *filosofo(void *id)
         pensar(i);        // filosofo esta pensando
         pegarGarfo(i);    // pega dois garfos ou bloqueia
         comer(i);         // comendo
+        time(&fim);
+        int t = fim - inicio;
+        printf("\tTempo gasto do %d para comer: %d\n", i, t);
         devolverGarfo(i); // devolver os garfos a mesa
     }
 }
@@ -114,9 +116,6 @@ void testar(int i)
     if (estado[i] == FAMINTO && estado[ESQUERDA] != COMENDO && estado[DIREITA] != COMENDO)
     {
         estado[i] = COMENDO;
-        time(&fim);
-        int t = fim - inicio;
-        //printf("\tTempo gasto do %d para comer: %d\n", i, t);
         mostrar();
         sem_post(&s[i]); // libera os garfos
     }
@@ -196,4 +195,5 @@ int main(void)
         res = pthread_join(thread[i], &thread_result);
         excecao(res);
     }
+    
 }
