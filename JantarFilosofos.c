@@ -13,14 +13,23 @@
 #define FAMINTO 1                // tentando pegar garfos
 #define COMENDO 2                // comendo
 
-int int_rand, i;
+int estado[N], int_rand, i;
 float float_rand;
-time_t inicio, fim, t;
+time_t inicio, fim;
 
-int estado[N]; // estado do filósofo
+//int estado[N]; // estado do filósofo
 sem_t mutex;   // controla a regiao critica
 sem_t s[N];    // semaforo de cada filosofo
-// pthread_t jantar[N];   // Todos os filósofos
+
+void mostrar();
+void *filosofo(void *id);
+void pegarGarfo(int i);
+void devolverGarfo(int i);
+void testar(int i);
+int tempoAleatorio();
+void pensar(int i);
+void comer(int i);
+void excecao(int e);
 
 /**
  * @brief Mostra o estado de cada filósofo
@@ -28,19 +37,20 @@ sem_t s[N];    // semaforo de cada filosofo
  */
 void mostrar()
 {
+    char *nome[5] = {"foo", "bar", "bletch", "jobs", "look"};
     for (i = 1; i <= N; i++)
     {
         if (estado[i - 1] == PENSANDO)
         {
-            printf("O Filosofo %d esta pensando.\n", i);
+            printf("O Filosofo %s esta pensando.\n", nome[i-1]);
         }
         if (estado[i - 1] == FAMINTO)
         {
-            printf("O Filosofo %d esta faminto.\n", i);
+            printf("O Filosofo %s esta faminto.\n", nome[i-1]);
         }
         if (estado[i - 1] == COMENDO)
         {
-            printf("O Filosofo %d esta comendo.\n", i);
+            printf("O Filosofo %s esta comendo.\n", nome[i-1]);
         }
     }
     printf("\n");
@@ -53,12 +63,12 @@ void mostrar()
  */
 void *filosofo(void *id)
 {
-    int i = *(int *)id, j; // Repassa o id do filósofo
+    int i = *(int *)id; // Repassa o id do filósofo
     while (true)
     {
-        pensar(i);     // filosofo esta pensando
-        pegarGarfo(i); // pega dois garfos ou bloqueia
-        comer(i);      // comendo
+        pensar(i);        // filosofo esta pensando
+        pegarGarfo(i);    // pega dois garfos ou bloqueia
+        comer(i);         // comendo
         devolverGarfo(i); // devolver os garfos a mesa
     }
 }
@@ -105,8 +115,8 @@ void testar(int i)
     {
         estado[i] = COMENDO;
         time(&fim);
-        t = fim - inicio;
-        printf("\tTempo gasto do %d para comer: %d\n", i, t);
+        int t = fim - inicio;
+        //printf("\tTempo gasto do %d para comer: %d\n", i, t);
         mostrar();
         sem_post(&s[i]); // libera os garfos
     }
@@ -119,7 +129,7 @@ void testar(int i)
  */
 int tempoAleatorio()
 {
-    int r = (rand() % 4);
+    int r = (rand() % 5);
     return r * 1000000;
 }
 
