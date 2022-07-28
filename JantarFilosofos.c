@@ -12,17 +12,14 @@
 #define FAMINTO 1                // tentando pegar garfos
 #define COMENDO 2                // comendo
 
+// teste
+int int_rand, i;
+float float_rand;
+
 int estado[N]; // estado do filósofo
 sem_t mutex;   // controla a regiao critica
 sem_t s[N];    // semaforo de cada filosofo
 // pthread_t jantar[N];   // Todos os filósofos
-
-void *filosofo(void *param);
-void pegarGarfo(int i);
-void devolverGarfo(int i);
-void testar(int i);
-void comer(int i);
-void pensar(int i);
 
 /**
  * @brief Mostra o estado de cada filósofo
@@ -30,7 +27,7 @@ void pensar(int i);
  */
 void mostrar()
 {
-    for (int i = 1; i <= N; i++)
+    for (i = 1; i <= N; i++)
     {
         if (estado[i - 1] == PENSANDO)
         {
@@ -111,16 +108,23 @@ void testar(int i)
 }
 
 /**
+ * @brief Gera um tempo aleatório em microsecundos entre 0 a 4000000(4s)
+ * 
+ * @return int 
+ */
+int tempoAleatorio(){
+    int r = (rand() % 4);
+    return r*1000000;
+}
+
+/**
  * @brief Muda o estado do filósofo para pensando
  *
  * @param i índice do filósofo
  */
 void pensar(int i)
 {
-    //int r = (rand() % 10 + 1);
-    float r = 0.001*random();
-    mostrar();
-    usleep((int)r);
+    usleep(tempoAleatorio());
 }
 
 /**
@@ -130,10 +134,7 @@ void pensar(int i)
  */
 void comer(int i)
 {
-    //int r = (rand() % 10 + 1); // gerar valores de tempo de 1 a 10
-    float r = 0.001*random();
-    mostrar();
-    usleep((int)r);
+    usleep(tempoAleatorio());
 }
 
 void excecao(int e)
@@ -147,7 +148,7 @@ void excecao(int e)
 
 int main(void)
 {
-    for (int i = 0; i < N; i++)
+    for ( i = 0; i < N; i++)
     {
         estado[i] = 0;
     }
@@ -160,21 +161,21 @@ int main(void)
     res = sem_init(&mutex, 0, 1);
     excecao(res);
 
-    for (int i = 0; i < N; i++)
+    for ( i = 0; i < N; i++)
     {
         res = sem_init(&s[i], 0, 0);
         excecao(res);
     }
 
     // cria as threads(filosofos)
-    for (int i = 0; i < N; i++)
+    for ( i = 0; i < N; i++)
     {
         res = pthread_create(&thread[i], NULL, filosofo, &i);
         excecao(res);
     }
 
     // faz um join nas threads
-    for (int i = 0; i < N; i++)
+    for ( i = 0; i < N; i++)
     {
         res = pthread_join(thread[i], &thread_result);
         excecao(res);
