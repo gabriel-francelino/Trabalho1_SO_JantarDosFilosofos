@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <time.h>
 
 #define N 5                      // numero de filosofos
 #define ESQUERDA (i + N - 1) % N // numero do vizinho a esquerda de i
@@ -12,9 +13,9 @@
 #define FAMINTO 1                // tentando pegar garfos
 #define COMENDO 2                // comendo
 
-// teste
 int int_rand, i;
 float float_rand;
+time_t inicio, fim, t;
 
 int estado[N]; // estado do filósofo
 sem_t mutex;   // controla a regiao critica
@@ -52,12 +53,12 @@ void mostrar()
  */
 void *filosofo(void *id)
 {
-    int i = *(int *)id; // Repassa o id do filósofo
+    int i = *(int *)id, j; // Repassa o id do filósofo
     while (true)
     {
-        pensar(i);        // filosofo esta pensando
-        pegarGarfo(i);    // pega dois garfos ou bloqueia
-        comer(i);         // comendo
+        pensar(i);     // filosofo esta pensando
+        pegarGarfo(i); // pega dois garfos ou bloqueia
+        comer(i);      // comendo
         devolverGarfo(i); // devolver os garfos a mesa
     }
 }
@@ -71,6 +72,7 @@ void pegarGarfo(int i)
 {
     sem_wait(&mutex);    // entra na regiao critica
     estado[i] = FAMINTO; // altera o estado do filósofo
+    time(&inicio);
     mostrar();
     testar(i);        // tenta pegar os garfos
     sem_post(&mutex); // Sai na região crítica
@@ -102,6 +104,9 @@ void testar(int i)
     if (estado[i] == FAMINTO && estado[ESQUERDA] != COMENDO && estado[DIREITA] != COMENDO)
     {
         estado[i] = COMENDO;
+        time(&fim);
+        t = fim - inicio;
+        printf("\tTempo gasto do %d para comer: %d\n", i, t);
         mostrar();
         sem_post(&s[i]); // libera os garfos
     }
@@ -109,12 +114,13 @@ void testar(int i)
 
 /**
  * @brief Gera um tempo aleatório em microsecundos entre 0 a 4000000(4s)
- * 
- * @return int 
+ *
+ * @return int
  */
-int tempoAleatorio(){
+int tempoAleatorio()
+{
     int r = (rand() % 4);
-    return r*1000000;
+    return r * 1000000;
 }
 
 /**
@@ -148,7 +154,7 @@ void excecao(int e)
 
 int main(void)
 {
-    for ( i = 0; i < N; i++)
+    for (i = 0; i < N; i++)
     {
         estado[i] = 0;
     }
@@ -161,21 +167,21 @@ int main(void)
     res = sem_init(&mutex, 0, 1);
     excecao(res);
 
-    for ( i = 0; i < N; i++)
+    for (i = 0; i < N; i++)
     {
         res = sem_init(&s[i], 0, 0);
         excecao(res);
     }
 
     // cria as threads(filosofos)
-    for ( i = 0; i < N; i++)
+    for (i = 0; i < N; i++)
     {
         res = pthread_create(&thread[i], NULL, filosofo, &i);
         excecao(res);
     }
 
     // faz um join nas threads
-    for ( i = 0; i < N; i++)
+    for (i = 0; i < N; i++)
     {
         res = pthread_join(thread[i], &thread_result);
         excecao(res);
