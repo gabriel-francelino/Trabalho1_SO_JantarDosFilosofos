@@ -6,9 +6,7 @@
 #include <time.h>
 #include <unistd.h>
 
-/**
- * @brief CONSTANTES
- */
+// CONSTANTES
 #define N 5                      // numero de filosofos
 #define ESQUERDA (i + N - 1) % N // numero do vizinho a esquerda de i
 #define DIREITA (i + 1) % N      // numero do vizinho a direita de i
@@ -16,19 +14,16 @@
 #define FAMINTO 1                // tentando pegar garfos
 #define COMENDO 2                // comendo
 
+// VARIÁVEIS GLOBAIS
 int estado[N], i = 0;
-
 clock_t start;
 clock_t end;
 double tempoEsperando = 0;
 int nVezesComeram = 0;
-
 sem_t mutex; // controla a regiao critica
 sem_t s[N];  // semaforo de cada filosofo
 
-/**
- * @brief Protótipos
- */
+// PROTÓTIPOS
 void mostrar();
 void *filosofo(void *id);
 void pegarGarfo(int i);
@@ -56,11 +51,11 @@ void mostrar() {
     }
   }
 
+  //CÁLCULA A MÉDIA DO TEMPO DE ESPERA
   if (nVezesComeram > 0) {
     double media = tempoEsperando / nVezesComeram;
     printf("\nOs filósofos se alimentaram %d vezes.", nVezesComeram);
-    printf("\nTempo médio de espera para comer: %.0f segundos.\n",
-           media * 10000);
+    printf("\nTempo médio de espera para comer: %.0f segundos.\n", media * 10000);
   }
   printf("\n");
 }
@@ -115,12 +110,10 @@ void devolverGarfo(int i) {
  * @param i índice do filósofo
  */
 void testar(int i) {
-  if (estado[i] == FAMINTO && estado[ESQUERDA] != COMENDO &&
-      estado[DIREITA] != COMENDO) {
+  if (estado[i] == FAMINTO && estado[ESQUERDA] != COMENDO && estado[DIREITA] != COMENDO) {
     estado[i] = COMENDO;
     end = clock(); // final do tempo de espera para comer
-    tempoEsperando += (double)(end - start) /
-                      CLOCKS_PER_SEC; // calculo do tempo de espera para comer
+    tempoEsperando += (double)(end - start) / CLOCKS_PER_SEC; // calculo do tempo de espera para comer
     nVezesComeram++;
     mostrar();
     sem_post(&s[i]); // libera os garfos
@@ -170,7 +163,6 @@ int main(void) {
   // Inicia os semaforos
   res = sem_init(&mutex, 0, 1);
   excecao(res);
-
   for (i = 0; i < N; i++) {
     res = sem_init(&s[i], 0, 0);
     excecao(res);
