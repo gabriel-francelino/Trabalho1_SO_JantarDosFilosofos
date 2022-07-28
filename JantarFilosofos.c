@@ -16,8 +16,7 @@
 
 // VARIÁVEIS GLOBAIS
 int estado[N], i = 0;
-clock_t start;
-clock_t end;
+clock_t start, end;
 double tempoEsperando = 0;
 int nVezesComeram = 0;
 sem_t mutex; // controla a regiao critica
