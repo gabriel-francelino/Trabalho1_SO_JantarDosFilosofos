@@ -1,11 +1,14 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
+/**
+ * @brief CONSTANTES
+ */
 #define N 5                      // numero de filosofos
 #define ESQUERDA (i + N - 1) % N // numero do vizinho a esquerda de i
 #define DIREITA (i + 1) % N      // numero do vizinho a direita de i
@@ -13,13 +16,19 @@
 #define FAMINTO 1                // tentando pegar garfos
 #define COMENDO 2                // comendo
 
-int estado[N], int_rand, i, cont=0;
-float float_rand;
-time_t inicio, fim;
+int estado[N], i = 0;
 
-sem_t mutex;   // controla a regiao critica
-sem_t s[N];    // semaforo de cada filosofo
+clock_t start;
+clock_t end;
+double tempoEsperando = 0;
+int nVezesComeram = 0;
 
+sem_t mutex; // controla a regiao critica
+sem_t s[N];  // semaforo de cada filosofo
+
+/**
+ * @brief Protótipos
+ */
 void mostrar();
 void *filosofo(void *id);
 void pegarGarfo(int i);
@@ -32,27 +41,28 @@ void excecao(int e);
 
 /**
  * @brief Mostra o estado de cada filósofo
- *
  */
-void mostrar()
-{
-    char *nome[5] = {"foo", "bar", "bletch", "jobs", "look"};
-    for (i = 1; i <= N; i++)
-    {
-        if (estado[i - 1] == PENSANDO)
-        {
-            printf("O Filosofo %s esta pensando.\n", nome[i-1]);
-        }
-        if (estado[i - 1] == FAMINTO)
-        {
-            printf("O Filosofo %s esta faminto.\n", nome[i-1]);
-        }
-        if (estado[i - 1] == COMENDO)
-        {
-            printf("O Filosofo %s esta comendo.\n", nome[i-1]);
-        }
+void mostrar() {
+  char *nome[5] = {"Gandalf", "Radagast", "Saruman", "Alatar", "Pallando"};
+  for (i = 0; i < N; i++) {
+    if (estado[i] == PENSANDO) {
+      printf("O Filosofo %s esta pensando.\n", nome[i]);
     }
-    printf("\n");
+    if (estado[i] == FAMINTO) {
+      printf("O Filosofo %s esta faminto.\n", nome[i]);
+    }
+    if (estado[i] == COMENDO) {
+      printf("O Filosofo %s esta comendo.\n", nome[i]);
+    }
+  }
+
+  if (nVezesComeram > 0) {
+    double media = tempoEsperando / nVezesComeram;
+    printf("\nOs filósofos se alimentaram %d vezes.", nVezesComeram);
+    printf("\nTempo médio de espera para comer: %.0f segundos.\n",
+           media * 10000);
+  }
+  printf("\n");
 }
 
 /**
@@ -60,19 +70,14 @@ void mostrar()
  *
  * @param i índice do filósofo
  */
-void *filosofo(void *id)
-{
-    int i = *(int *)id; // Repassa o id do filósofo
-    while (true)
-    {
-        pensar(i);        // filosofo esta pensando
-        pegarGarfo(i);    // pega dois garfos ou bloqueia
-        comer(i);         // comendo
-        time(&fim);
-        int t = fim - inicio;
-        printf("\tTempo gasto do %d para comer: %d\n", i, t);
-        devolverGarfo(i); // devolver os garfos a mesa
-    }
+void *filosofo(void *id) {
+  int i = *(int *)id; // Repassa o id do filósofo
+  while (true) {
+    pensar(i);        // filosofo esta pensando
+    pegarGarfo(i);    // pega dois garfos ou bloqueia
+    comer(i);         // comendo
+    devolverGarfo(i); // devolver os garfos a mesa
+  }
 }
 
 /**
@@ -80,15 +85,14 @@ void *filosofo(void *id)
  *
  * @param i  O número do filósofo, de 0 a N–1
  */
-void pegarGarfo(int i)
-{
-    sem_wait(&mutex);    // entra na regiao critica
-    estado[i] = FAMINTO; // altera o estado do filósofo
-    time(&inicio);
-    mostrar();
-    testar(i);        // tenta pegar os garfos
-    sem_post(&mutex); // Sai na região crítica
-    sem_wait(&s[i]);  // Bloqueia os hashis
+void pegarGarfo(int i) {
+  sem_wait(&mutex);    // entra na regiao critica
+  estado[i] = FAMINTO; // altera o estado do filósofo
+  start = clock();     // inicia do tempo de espera para comer
+  mostrar();
+  testar(i);        // tenta pegar os garfos
+  sem_post(&mutex); // Sai na região crítica
+  sem_wait(&s[i]);  // Bloqueia os hashis
 }
 
 /**
@@ -96,14 +100,13 @@ void pegarGarfo(int i)
  *
  * @param i O número do filósofo, de 0 a N–1
  */
-void devolverGarfo(int i)
-{
-    sem_wait(&mutex); // entra na regiao critica
-    estado[i] = PENSANDO;
-    mostrar();
-    testar(ESQUERDA); // ve se o vizinho da esquerda pode comer agora
-    testar(DIREITA);  // ve se o vizinho da direita pode comer agora
-    sem_post(&mutex); // Sai da regiсo crítica
+void devolverGarfo(int i) {
+  sem_wait(&mutex); // entra na regiao critica
+  estado[i] = PENSANDO;
+  mostrar();
+  testar(ESQUERDA); // ve se o vizinho da esquerda pode comer agora
+  testar(DIREITA);  // ve se o vizinho da direita pode comer agora
+  sem_post(&mutex); // Sai da regiсo crítica
 }
 
 /**
@@ -111,14 +114,17 @@ void devolverGarfo(int i)
  *
  * @param i índice do filósofo
  */
-void testar(int i)
-{
-    if (estado[i] == FAMINTO && estado[ESQUERDA] != COMENDO && estado[DIREITA] != COMENDO)
-    {
-        estado[i] = COMENDO;
-        mostrar();
-        sem_post(&s[i]); // libera os garfos
-    }
+void testar(int i) {
+  if (estado[i] == FAMINTO && estado[ESQUERDA] != COMENDO &&
+      estado[DIREITA] != COMENDO) {
+    estado[i] = COMENDO;
+    end = clock(); // final do tempo de espera para comer
+    tempoEsperando += (double)(end - start) /
+                      CLOCKS_PER_SEC; // calculo do tempo de espera para comer
+    nVezesComeram++;
+    mostrar();
+    sem_post(&s[i]); // libera os garfos
+  }
 }
 
 /**
@@ -126,10 +132,9 @@ void testar(int i)
  *
  * @return int
  */
-int tempoAleatorio()
-{
-    int r = (rand() % 5);
-    return r * 1000000;
+int tempoAleatorio() {
+  int r = (rand() % 5);
+  return r * 1000000;
 }
 
 /**
@@ -137,63 +142,49 @@ int tempoAleatorio()
  *
  * @param i índice do filósofo
  */
-void pensar(int i)
-{
-    usleep(tempoAleatorio());
-}
+void pensar(int i) { usleep(tempoAleatorio()); }
 
 /**
  * @brief Muda o estado do filósofo para comendo
  *
  * @param i índice do filósofo
  */
-void comer(int i)
-{
-    usleep(tempoAleatorio());
+void comer(int i) { usleep(tempoAleatorio()); }
+
+void excecao(int e) {
+  if (e != 0) {
+    perror("Erro na inicializacao do semaforo");
+    exit(EXIT_FAILURE);
+  }
 }
 
-void excecao(int e)
-{
-    if (e != 0)
-    {
-        perror("Erro na inicializacao do semaforo");
-        exit(EXIT_FAILURE);
-    }
-}
+int main(void) {
+  for (i = 0; i < N; i++) {
+    estado[i] = 0;
+  }
+  mostrar();
+  int res;
+  pthread_t thread[N];
+  void *thread_result;
 
-int main(void)
-{
-    for (i = 0; i < N; i++)
-    {
-        estado[i] = 0;
-    }
-    mostrar();
-    int res;
-    pthread_t thread[N];
-    void *thread_result;
+  // Inicia os semaforos
+  res = sem_init(&mutex, 0, 1);
+  excecao(res);
 
-    // Inicia os semaforos
-    res = sem_init(&mutex, 0, 1);
+  for (i = 0; i < N; i++) {
+    res = sem_init(&s[i], 0, 0);
     excecao(res);
+  }
 
-    for (i = 0; i < N; i++)
-    {
-        res = sem_init(&s[i], 0, 0);
-        excecao(res);
-    }
+  // cria as threads(filosofos)
+  for (i = 0; i < N; i++) {
+    res = pthread_create(&thread[i], NULL, filosofo, &i);
+    excecao(res);
+  }
 
-    // cria as threads(filosofos)
-    for (i = 0; i < N; i++)
-    {
-        res = pthread_create(&thread[i], NULL, filosofo, &i);
-        excecao(res);
-    }
-
-    // faz um join nas threads
-    for (i = 0; i < N; i++)
-    {
-        res = pthread_join(thread[i], &thread_result);
-        excecao(res);
-    }
-    
+  // faz um join nas threads
+  for (i = 0; i < N; i++) {
+    res = pthread_join(thread[i], &thread_result);
+    excecao(res);
+  }
 }
