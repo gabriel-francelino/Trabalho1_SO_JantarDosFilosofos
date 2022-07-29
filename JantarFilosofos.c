@@ -86,7 +86,7 @@ void pegarGarfo(int i) {
   mostrar();
   testar(i);        // tenta pegar os garfos
   sem_post(&mutex); // Sai na região crítica
-  sem_wait(&s[i]);  // Bloqueia os hashis
+  sem_wait(&s[i]);  // Bloqueia os garfos
 }
 
 /**
@@ -152,7 +152,7 @@ void excecao(int e) {
 
 int main(void) {
   for (i = 0; i < N; i++) {
-    estado[i] = 0;
+    estado[i] = PENSANDO;
   }
   mostrar();
   int res;
